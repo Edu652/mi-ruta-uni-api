@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Ruta</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+    </style>
+    <script>
+        // Aplica el tema oscuro/claro al cargar la página para evitar parpadeos
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-white antialiased transition-colors duration-300">
+
+    <div class="w-full max-w-4xl mx-auto p-4 md:p-6">
+        
+        <!-- CABECERA FIJA -->
+        <div class="sticky top-0 z-20 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-md py-4 -mx-4 px-4 mb-4 border-b border-slate-200 dark:border-slate-700">
+            <div class="text-center max-w-2xl mx-auto">
+                 <a href="/" class="block text-indigo-600 dark:text-indigo-400 hover:underline transition-colors text-sm mb-2">&larr; Nueva Búsqueda</a>
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Rutas Encontradas</h1>
+                <p class="text-slate-500 dark:text-slate-400">{{ origen }} &rarr; {{ destino }}</p>
+                <!-- Mostrar el día de la semana -->
+                {% if dia_semana %}
+                <p class="text-sm text-slate-400 mt-1">Horarios para: <span class="font-semibold">{{ dia_semana }}</span></p>
+                {% endif %}
+                
+                <!-- SECCIÓN DE FILTROS APLICADOS -->
+                {% if filtros %}
+                <div class="flex flex-wrap gap-2 justify-center mt-4">
+                    {% if filtros.desde_ahora and dia_semana|lower == filtros.dia_actual|lower %}<span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-1 rounded-full dark:bg-indigo-900 dark:text-indigo-300">Desde ahora</span>{% endif %}
+                    {% if filtros.salir_despues_check %}<span class="bg-sky-100 text-sky-800 text-xs font-medium px-2.5 py-1 rounded-full dark:bg-sky-900 dark:text-sky-300">Salir &gt; {{ filtros.salir_despues_hora }}:{{ filtros.salir_despues_minuto }}</span>{% endif %}
+                    {% if filtros.llegar_antes_check %}<span class="bg-rose-100 text-rose-800 text-xs font-medium px-2.5 py-1 rounded-full dark:bg-rose-900 dark:text-rose-300">Llegar &lt; {{ filtros.llegar_antes_hora }}:{{ filtros.llegar_antes_minuto }}</span>{% endif %}
+                    {% if filtros.evitar_sj %}<span class="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-1 rounded-full dark:bg-amber-900 dark:text-amber-300">Evitando Sta. Justa</span>{% endif %}
+                    {% if filtros.evitar_pa %}<span class="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-1 rounded-full dark:bg-amber-900 dark:text-amber-300">Evitando Plz. Armas</span>{% endif %}
+                    {% if filtros.solo_tren %}<span class="bg-cyan-100 text-cyan-800 text-xs font-medium px-2.5 py-1 rounded-full dark:bg-cyan-900 dark:text-cyan-300">Solo Tren 🚆</span>{% endif %}
+                    {% if filtros.solo_bus %}<span class="bg-teal-100 text-teal-800 text-xs font-medium px-2.5 py-1 rounded-full dark:bg-teal-900 dark:text-teal-300">Solo Bus 🚌</span>{% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Contenedor de resultados -->
+        <div class="max-w-2xl mx-auto space-y-6">
+            {% if resultados %}
+                {% for resultado in resultados %}
+                <div class="relative bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden border border-slate-200 dark:border-slate-700 transition-colors">
+                     <div class="absolute top-3 left-3 w-7 h-7 bg-indigo-500 dark:bg-indigo-400 text-white dark:text-slate-900 rounded-full flex items-center justify-center font-bold text-sm z-10">{{ loop.index }}</div>
+
+                    <div class="p-4 bg-slate-50 dark:bg-slate-700/50 grid grid-cols-3 gap-4 items-center text-center">
+                        <div class="text-left pl-8">
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Hora de Salida</p>
+                            <p class="text-xl font-bold text-indigo-600 dark:text-indigo-400">{{ resultado.segmentos[0].Salida_str }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Llegada Aprox.</p>
+                            <p class="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                                {% if resultado.hora_llegada_final == 'Flexible' %}Flexible{% else %}{{ resultado.hora_llegada_final.strftime('%H:%M') }}{% endif %}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Duración Total</p>
+                            <p class="font-semibold">{{ resultado.duracion_total_str }}</p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ "%.2f"|format(resultado.precio_total) }} €</p>
+                        </div>
+                    </div>
+
+                    <div class="p-4 space-y-3">
+                        {% for segmento in resultado.segmentos %}
+                        <div class="flex items-start">
+                             {% if segmento.icono == 'LOGO_CONSORCIO' %}
+                                <img src="{{ url_for('static', filename='Logo Junta.jpg') }}" alt="Logo Consorcio" class="w-6 h-6 mr-4 mt-1">
+                            {% else %}
+                                <span class="text-2xl mr-4 mt-1">{{ segmento.icono }}</span>
+                            {% endif %}
+                            <div class="flex-grow">
+                                <div class="flex justify-between items-center">
+                                    <p class="font-semibold">{{ segmento.Compania | default('') }}</p>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ "%.2f"|format(segmento.Precio) }} €</p>
+                                </div>
+                                <p class="text-sm">{{ segmento.Origen }} &rarr; {{ segmento.Destino }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    <span class="font-medium">Salida:</span> {{ segmento.Salida_str }} 
+                                    {% if segmento.Llegada_str %}| <span class="font-medium">Llegada:</span> {{ segmento.Llegada_str }}{% endif %}
+                                    | <span class="font-medium">Duración:</span> {{ "%.0f"|format(segmento.Duracion_Tramo_Min | default(0)) }} min
+                                    {% set compania_lower = segmento.Compania|string|lower %}
+                                    {% if ('urbano' in compania_lower or 'emtusa' in compania_lower) and segmento.Linea and segmento.Linea|string|lower != 'nan' %}
+                                        | <span class="font-medium">Línea:</span> {{ segmento.Linea | int }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% if not loop.last %}
+                            <div class="pl-10">
+                                <div class="border-l-2 border-slate-300 dark:border-slate-600 h-2 ml-3"></div>
+                                <p class="text-xs text-slate-500 -ml-1">Transbordo</p>
+                            </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <p class="text-4xl mb-4">😔</p>
+                    <h2 class="text-xl font-semibold mb-2">¡Vaya! No encontramos rutas</h2>
+                    <p class="text-slate-500 dark:text-slate-400">No hemos podido encontrar una combinación para este trayecto con los filtros aplicados.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>
+
